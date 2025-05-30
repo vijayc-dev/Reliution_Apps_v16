@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates>
+
+    <t t-name="BalanceSheet"  class="o_action">
+        <div class="">
+            <div style="margin-bottom: 3px;text-align: center;">
+                <h1 style="margin: 1x;">Balance Sheet</h1>
+            </div>
+            <div style="margin-bottom: 3px;text-align: center;">
+                <button type="button" class="btn py-btn-primary" id="xlsx" t-on-click="print_xlsx"
+                        style="position: relative;">Export (XLSX)
+                </button>
+                <t t-call="date_from_balance_sheet"/>
+                <t t-call="date_to_balance_sheet"/>
+                <t t-call="branch_ids_balance"/>
+                <span class="fetch_report_btn" type="button"
+                      t-on-click="loadData"
+                      style="background-color:green;color:white ;width:50px;text-align:center;margin-left:17px;">Apply
+                </span>
+                <span class="filter_view_pr"/>
+            </div>
+            <div>
+                <div class="table_view_pr" style="width: 95%; margin: auto;"/>
+            </div>
+        </div>
+    </t>
+    <span t-name="date_from_balance_sheet" class=" date_start_div">
+        <span>Start Date</span>
+        <input type="date" name="date_from"
+               class="date_from"/>
+    </span>
+    <span t-name="date_to_balance_sheet" class=" date_end_div">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"/>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("input[name='date_to']", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+            console.log("Selected range: " + dateStr);
+            }
+            });
+            });
+        </script>
+        <span>End Date</span>
+                <input type="date" name="date_to" class="date_to"/>
+    </span>
+    <span t-name="branch_ids_balance">
+        <span class="py-search-branch" style="margin-left: 10px;">
+            <!-- Trigger button for dropdown -->
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <span class="fa fa-book"></span>
+                Companies
+            </button>
+
+            <!-- Dropdown menu containing the multi-select -->
+            <span class="dropdown-menu p-3">
+                <select id="many2many-select" class="form-control" multiple="multiple"
+                        t-att-data-placeholder="'Select branches...'"
+                        style="width: 100%;" t-ref="selectBox">
+                    <t t-foreach="branch_list" t-as="branch" t-key="branch.id">
+                        <option t-att-value="branch.id">
+                            <t t-esc="branch.name"/>
+                        </option>
+                    </t>
+                </select>
+            </span>
+        </span>
+
+        <!-- Display selected branches -->
+         <span t-if="selected_branches.length > 0" style="margin-top: 10px;">
+        <t t-foreach="selected_branches" t-as="branch" t-key="branch.id">
+            <span class="badge bg-primary me-2">
+                <t t-esc="branch.name"/>
+                <i class="fa fa-times-circle ms-2" t-on-click="removeBranch.bind(this, branch.id)"></i>
+            </span>
+        </t>
+    </span>
+    </span>
+
+    <t t-name="BalanceSheetLine">
+        <style>
+            .custom_row {
+            display: flex;
+            justify-content: space-between; /* Space between columns */
+            align-items: center; /* Center items vertically */
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            }
+            .custom_column {
+            flex: 1; /* Flex property for equal width */
+            padding: 10px;
+            }
+            .custom_column h3 {
+            margin: 0;
+            }
+            .scrollable-section {
+            overflow-y: auto;
+            max-height: 70vh; /* This will handle screens with moderate height */
+            }
+
+            @media (max-width: 2000px) {
+            .scrollable-section {
+            max-height: 65vh; /* Reduce height for smaller screens */
+            }
+            }
+
+            @media (max-width: 1600px) {
+            .scrollable-section {
+            max-height: 60vh; /* Further reduce for smaller screens */
+            }
+            }
+
+            @media (max-width: 1200px) {
+            .scrollable-section {
+            max-height: 55vh; /* Continue adjusting for different screen sizes */
+            }
+            }
+
+            @media (max-width: 900px) {
+            .scrollable-section {
+            max-height: 50vh; /* For smaller screens like laptops or tablets */
+            }
+            }
+
+            @media (max-width: 600px) {
+            .scrollable-section {
+            max-height: 45vh; /* For mobile screens */
+            }
+            }
+
+            /* Ensure table width adjusts with the screen size */
+            .table {
+            width: 100%;
+            table-layout: auto;
+            }
+
+            /* Make sure the footer (like net profit) stays at the bottom */
+            .footer-section {
+            position: sticky;
+            bottom: 0;
+            background: #fff; /* Optional background color to distinguish it */
+            padding: 10px;
+            border-top: 1px solid #000; /* Optional border */
+            }
+
+        </style>
+
+        <div class="table_main_view">
+            <div class="row">
+                <div class="col-6 scrollable-section">
+                    <div class="custom_row">
+                        <div class="custom_column">
+                            <h3>EQUITY</h3>
+                        </div>
+                        <div class="custom_column">
+                            <t t-debug="net_lines"/>
+                            <span t-esc="net_lines.total_equity.toFixed(2)"/>
+                        </div>
+                    </div>
+                    <div class ="scrollable-section">
+                        <t t-set="equity_lines" t-value="equity_lines"/>
+                        <t t-foreach="equity_lines" t-as="group" t-key="group">
+                            <h4 style="font-style:italic">
+                                <t t-esc="group"/>
+                            </h4>
+                            <div class="scrollable-table">
+                                <table class="table table-sm">
+                                    <t t-foreach="equity_lines[group]" t-as="record" t-key="record">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <h4 style="font-style:italic;text-decoration:underline">
+                                                        <t t-esc="record"/>
+                                                    </h4>
+                                                </th>
+                                                <th>
+                                                    <t t-set="equity_total" t-value="0"/>
+                                                       <t t-debug=""/>
+                                                       <t t-foreach="equity_lines[group][record]" t-as="lines" t-key="lines">
+                                                           <t t-if="lines and lines.amount">
+                                                                    <t t-set="equity_total"
+                                                                       t-value="equity_total + lines.amount"/>
+                                                                </t>
+                                                       </t>
+                                                       Total :
+                                                       <strong>
+                                                           <t t-esc="-equity_total.toFixed(2)"/>
+                                                       </strong>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th>Account</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-set="equity_total" t-value="0"/>
+                                             <t t-foreach="equity_lines[group][record]" t-as="lines" t-key="lines">
+                                            <tr>
+                                                <td>
+                                                    <a href="#"
+                                                       t-att-id="lines.account_id"
+                                                       class="link-button click_account_line">
+                                                        <t t-esc="lines.account_name"/>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="lines.amount"
+                                                       t-options='{"widget": "float", "precision": 2}'/>
+                                                    <t t-set="equity_total" t-value="equity_total+lines.amount"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        </tbody>
+                                    </t>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="custom_row">
+                        <div class="custom_column">
+                            <h3>LIABILITIES</h3>
+                        </div>
+                        <div class="custom_column">
+                            <span t-esc="net_lines.total_liability.toFixed(2)"/>
+                        </div>
+                    </div>
+                    <div class = "scrollable-section">
+                        <t t-set="liability_lines" t-value="liability_lines"/>
+                        <t t-foreach="liability_lines" t-as="group" t-key="group">
+                            <h4 style="font-style:italic">
+                                <t t-esc="group"/>
+                            </h4>
+                            <div class="scrollable-table">
+                                <table class="table table-sm">
+                                    <t t-foreach="liability_lines[group]" t-as="record" t-key="record">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <h4 style="font-style:italic;text-decoration:underline">
+                                                        <t t-esc="record"/>
+                                                    </h4>
+                                                </th>
+                                                <th>
+                                                    <t t-set="expense_total" t-value="0"/>
+                                                       <t t-debug=""/>
+                                                       <t t-foreach="liability_lines[group][record]" t-as="lines" t-key="lines">
+                                                           <t t-if="lines and lines.amount">
+                                                                    <t t-set="expense_total"
+                                                                       t-value="expense_total + lines.amount"/>
+                                                                </t>
+                                                       </t>
+                                                       Total :
+                                                       <strong>
+                                                           <t t-esc="-expense_total.toFixed(2)"/>
+                                                       </strong>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th>Account</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-set="expense_total" t-value="0"/>
+                                             <t t-foreach="liability_lines[group][record]" t-as="lines" t-key="lines">
+                                            <tr>
+                                                <td>
+                                                    <a href="#"
+                                                       t-att-id="lines.account_id"
+                                                       class="link-button click_account_line">
+                                                        <t t-esc="lines.account_name"/>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="lines.amount"
+                                                       t-options='{"widget": "float", "precision": 2}'/>
+                                                    <t t-set="expense_total" t-value="expense_total+lines.amount"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        </tbody>
+                                    </t>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="custom_row">
+                        <div class="custom_column">
+                            <h3>ASSESTS</h3>
+                        </div>
+                        <div class="custom_column">
+                            <span t-esc="net_lines.total_assets.toFixed(2)"/>
+                        </div>
+                    </div>
+                    <t t-set="income_total" t-value="0"/>
+                    <div class = "scrollable-section">
+                        <t t-foreach="assets_lines" t-as="group" t-key="group">
+                            <h4 style="font-style:italic">
+                                <t t-esc="group"/>
+                            </h4>
+                            <div class="scrollable-table">
+                                <table class="table table-sm">
+                                    <t t-foreach="assets_lines[group]" t-as="record" t-key="record">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <h4 style="font-style:italic;text-decoration:underline">
+                                                        <t t-esc="record"/>
+                                                    </h4>
+                                                </th>
+                                                   <th>
+                                                       <t t-set="income_total" t-value="0"/>
+                                                       <t t-debug=""/>
+                                                       <t t-foreach="assets_lines[group][record]" t-as="lines"
+                                                          t-key="lines">
+                                                           <t t-if="lines and lines.amount">
+                                                                    <t t-set="income_total"
+                                                                       t-value="income_total + lines.amount"/>
+                                                                </t>
+                                                       </t>
+                                                       Total :
+                                                       <strong>
+                                                           <t t-esc="income_total.toFixed(2)"/>
+                                                       </strong>
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th>Account</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-set="income_total" t-value="0"/>
+                                            <t t-debug=""/>
+                                                  <t t-foreach="assets_lines[group][record]" t-as="lines" t-key="lines">
+                                            <tr>
+                                                <td>
+                                                    <a href="#"
+                                                       t-att-id="lines.account_id"
+                                                       class="link-button click_account_line">
+                                                        <t t-esc="lines.account_name"/>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="lines.amount"
+                                                       t-options='{"widget": "float", "precision": 2}'/>
+                                                    <t t-set="income_total" t-value="income_total+lines.amount"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        </tbody>
+                                    </t>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+             <div class="row">
+                 <t>
+                    <div class="col-6">
+                        <t t-if="net_lines.balance_data == 'liability'">
+
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>
+                                        <h3>LIABILITIES + EQUITY</h3>
+                                    </td>
+                                    <td/>
+                                    <td>
+                                        <t t-esc="net_lines.total_amount.toFixed(2)"/>
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </t>
+                    </div>
+                    <div class="col-6">
+                    </div>
+                 </t>
+                </div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="account_move_form_inherit" model="ir.ui.view">
+        <field name="name">rcs.account.move.form.inherit</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='invoice_tab']/field[@name='invoice_line_ids']/tree"
+                   position="inside">
+                <control>
+                    <button name="action_add_from_catalog" string="Catalog" type="object" class="px-4 btn-link"
+                            context="{'order_id': parent.id , 'custom_catalog_view':True }"/>
+                </control>
+            </xpath>
+        </field>
+    </record>
+</odoo>

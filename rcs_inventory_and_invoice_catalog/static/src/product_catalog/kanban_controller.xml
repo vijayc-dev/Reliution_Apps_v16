@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ProductCatalogKanbanController" t-inherit="web.KanbanView.Buttons"
+       t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('o-kanban-button-new')]" position="replace">
+            <t t-if="props.context.custom_catalog_view">
+                <button t-out="this.buttonString" type="button" class="btn btn-secondary o-kanban-button-back"
+                        t-on-click="this.backToQuotationDebounced"/>
+            </t>
+            <t t-else="">
+                <t t-if="canCreate">
+                    <button type="button" class="btn btn-primary o-kanban-button-new" accesskey="c" t-on-click="() => this.createRecord(null)" data-bounce-button="">
+                        New
+                    </button>
+                </t>
+            </t>
+        </xpath>
+    </t>
+</templates>

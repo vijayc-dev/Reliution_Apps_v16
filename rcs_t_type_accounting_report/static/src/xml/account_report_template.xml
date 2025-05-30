@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates id="custom_profit_loss_template" name="Profit Loss Template">
+
+    <t t-name="ProfitLossReportTemp">
+        <div class="">
+            <div style="margin-bottom: 3px;text-align: center;">
+                <h1 style="margin: 1x;">Profit Loss</h1>
+            </div>
+            <div style="margin-bottom: 32px;text-align: center;">
+                <button type="button" class="xlsx_profit_loss btn py-btn-primary" id="xlsx"
+                        style="position: relative;">Export (XLSX)
+                </button>
+                <span t-name="date_from" class=" date_start_div">
+                    <span>Start Date</span>
+                    <input type="date" name="date_from"
+                           class="date_from"/>
+                </span>
+                <span t-name="date_to" class=" date_end_div">
+                    <span style="margin-left: 10px;">End Date</span>
+                    <input type="date" name="date_to" class="date_to"/>
+                </span>
+
+                <span t-name="branch_ids">
+                    <span class="py-search-branch" style="margin-left: 10px;">
+                        <!-- Trigger button for dropdown -->
+                        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <span class="fa fa-book"></span>
+                            Companies
+                        </button>
+
+                        <!-- Dropdown menu containing the multi-select -->
+<!--                        <span class="dropdown-menu p-3">-->
+<!--                            <select id="many2many-select" class="form-control" multiple="multiple"-->
+<!--                                    t-att-data-placeholder="'Select branches...'"-->
+<!--                                    style="width: 100%;" t-ref="selectBox">-->
+<!--                                <t t-foreach="branch_list" t-as="branch" t-key="branch.id">-->
+<!--                                    <option t-att-value="branch.id">-->
+<!--                                        <t t-esc="branch.name"/>-->
+<!--                                    </option>-->
+<!--                                </t>-->
+<!--                            </select>-->
+<!--                        </span>-->
+                    </span>
+                </span>
+                <span t-name="with_tax_data">
+                    <span class="data" style="margin-left: 10px;">
+                        <input type="checkbox" t-att-checked="with_tax_data ? 'checked' : ''"
+                               t-on-change="toggleWithTaxData"
+                               id="with_tax_data"/>
+                        <label for="with_tax_data">Only Tax Entries</label>
+                    </span>
+                </span>
+                <span class="apply_profit_loss fetch_report_btn" type="button"
+                      style="background-color:green;color:white ;width:50px;text-align:center;margin-left: 10px;">Apply
+                </span>
+                <!--                                <t t-call="date_from"/>-->
+                <!--                                <t t-call="date_to"/>-->
+                <!--                <t t-call="branch_ids"/>-->
+                <!--                <t t-call="with_tax_data"/>-->
+                <!--                <span class="fetch_report_btn" type="button" t-on-click="loadData"-->
+                <!--                      style="background-color:green;color:white ;width:50px;text-align:center;margin-left: 10px;">Apply-->
+                <!--                </span>-->
+                <!--                <span class="filter_view_pr"/>-->
+            </div>
+            <div>
+                <div class="table_view_pr" style="width: 95%; margin: auto;"/>
+            </div>
+
+
+        </div>
+
+
+    </t>
+    <span t-name="FinanceTableCustom" class="o_action">
+
+        <style>
+            .custom_row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            }
+
+            .custom_column {
+            padding: 0 10px; /* Adjust padding as needed */
+            }
+
+            .scrollable-section {
+            overflow-y: auto;
+            max-height: 70vh; /* This will handle screens with moderate height */
+            }
+
+            @media (max-width: 2000px) {
+            .scrollable-section {
+            max-height: 65vh; /* Reduce height for smaller screens */
+            }
+            }
+
+            @media (max-width: 1600px) {
+            .scrollable-section {
+            max-height: 60vh; /* Further reduce for smaller screens */
+            }
+            }
+
+            @media (max-width: 1200px) {
+            .scrollable-section {
+            max-height: 55vh; /* Continue adjusting for different screen sizes */
+            }
+            }
+
+            @media (max-width: 900px) {
+            .scrollable-section {
+            max-height: 50vh; /* For smaller screens like laptops or tablets */
+            }
+            }
+
+            @media (max-width: 600px) {
+            .scrollable-section {
+            max-height: 45vh; /* For mobile screens */
+            }
+            }
+
+            /* Ensure table width adjusts with the screen size */
+            .table {
+            width: 100%;
+            table-layout: auto;
+            }
+
+            /* Make sure the footer (like net profit) stays at the bottom */
+            .footer-section {
+            position: sticky;
+            bottom: 0;
+            background: #fff; /* Optional background color to distinguish it */
+            padding: 10px;
+            border-top: 1px solid #000; /* Optional border */
+            }
+        </style>
+        <t t-debug=""/>
+        <div class="table_main_view">
+            <t t-set="total_income" t-value="net_lines.total_income"/>
+            <div class="row">
+                <!--           ****************  INCOME BLOCK  ****************          -->
+                <div class="col-6">
+                    <div class="custom_row">
+                        <div class="custom_column ms-5">
+                            <h3>INCOME</h3>
+                        </div>
+                        <div class="custom_column me-2">
+                            <t t-esc="net_lines.total_income.toFixed(2)"/>
+                        </div>
+                    </div>
+                    <div class="scrollable-section ms-5">
+                        <t t-foreach="income_lines" t-as="group" t-key="group">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h4>
+                                    <t t-esc="group"/>
+                                </h4>
+                                <t t-debug=""/>
+                                <h4>
+                                    <t t-set="income_total" t-value="0"/>
+                                    <t t-foreach="income_lines[group]" t-as="record" t-key="record.id">
+                                        <tr>
+                                            <td>
+                                                <t t-set="income_total" t-value="income_total + record.amount"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    Total :
+                                    <t t-esc="income_total.toFixed(2)"/>
+                                </h4>
+                            </div>
+                            <!--    ************** Table of Invoice *************-->
+                            <div class="scrollable-table ms-5">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Account</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="income_total" t-value="0"/>
+                                        <t t-foreach="income_lines[group]" t-as="record" t-key="record.id">
+                                            <tr>
+                                                <td>
+                                                    <a href="#"
+                                                       t-att-id="record.account_id"
+                                                       class="link-button click_account_line">
+                                                        <t t-esc="record.account_name"/>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="record.amount"
+                                                       t-options='{"widget": "float", "precision": 2}'/>
+                                                    <t t-set="income_total" t-value="income_total+record.amount"/>
+
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+
+                </div>
+                <!--           ****************  EXPENSE BLOCK  ****************          -->
+                <div class="col-6">
+                    <div class="custom_row">
+                        <div class="custom_column">
+                            <h3>EXPENSE</h3>
+                        </div>
+                        <div class="custom_column me-5">
+                            <t t-esc="net_lines.total_expense.toFixed(2)"/>
+                        </div>
+                    </div>
+
+                    <div class="scrollable-section me-5">
+                        <t t-set="expense_lines" t-value="expense_lines"/>
+                        <t t-foreach="expense_lines" t-as="group" t-key="group">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h4>
+                                    <t t-esc="group"/>
+                                    <!--                                <strong>Expense</strong>-->
+                                </h4>
+                                <h4>
+                                    <t t-set="expense_total" t-value="0"/>
+                                    <t t-foreach="expense_lines[group]" t-as="record" t-key="record.id">
+                                        <tr>
+                                            <td>
+                                                <!--                                            <strong>Expense total 00</strong>-->
+                                                <t t-set="expense_total" t-value="expense_total+record.amount"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    Total :
+                                    <t t-esc="expense_total.toFixed(2)"/>
+                                </h4>
+                            </div>
+                            <div class="scrollable-table me-5">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Account</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="expense_total" t-value="0"/>
+                                        <t t-foreach="expense_lines[group]" t-as="record" t-key="record.id">
+                                            <tr>
+                                                <td>
+                                                    <a href="#"
+                                                       t-att-id="record.account_id"
+                                                       class="link-button click_account_line">
+                                                        <t t-esc="record.account_name"/>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="record.amount"/>
+                                                    <!--                                                       t-options='{"widget": "float", "precision": 2}'/>-->
+                                                    <t t-set="expense_total" t-value="expense_total+record.amount"/>
+                                                    <!--                                            <strong>1548255</strong>-->
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!--  ************** Table of Expense ************-->
+
+
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-6">
+                    <t t-if="net_lines.profit_loss == 'profit'">
+                        <table class="table ms-5">
+                            <tr>
+                                <td>
+                                    <h3>Net Profit</h3>
+                                </td>
+                                <td/>
+                                <td>
+                                    <t t-esc="net_lines.total_amount.toFixed(2)"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </t>
+                </div>
+                <div class="col-6">
+                    <t t-if="net_lines.profit_loss == 'loss'">
+                        <table class="table">
+                            <tr>
+                                <td>
+                                    <h3>Net Loss</h3>
+                                </td>
+                                <td/>
+                                <td>
+                                    <t t-esc="net_lines.total_amount.toFixed(2)"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </span>
+
+</templates>
+

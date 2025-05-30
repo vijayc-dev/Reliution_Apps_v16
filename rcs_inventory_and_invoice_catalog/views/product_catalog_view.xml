@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="product_view_kanban_catalog" model="ir.ui.view">
+        <field name="name">product.view.kanban.catalog</field>
+        <field name="model">product.product</field>
+        <field name="arch" type="xml">
+            <kanban records_draggable="0" js_class="product_kanban_catalog">
+                <field name="id" invisible="1"/>
+                <field name="default_code" invisible="1"/>
+                <field name="default_code" invisible="1" position="after">
+                    <field name="detailed_type" invisible="1"/>
+                </field>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class=" d-flex flex-column bg-light p-2 rounded shadow-sm"
+                             t-att-class="{'catalog_kanban_border': state.productQty || env.read_only,'catalog_kanban_background': !(state.productQty || env.read_only)}"
+                        >
+                            <div class="o_dropdown_kanban dropdown catalog_three_dot">
+                                <a class="dropdown-toggle o-no-caret btn" role="button" data-bs-toggle="dropdown"
+                                   data-bs-display="static" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a role="menuitem" type="object" name="action_product_forecast_report"
+                                       class="dropdown-item border-top-0">View Availability
+                                    </a>
+                                </div>
+                            </div>
+                            <!-- Top Section: Image and Product Info -->
+                            <div class="d-flex align-items-start increment">
+                                <div class="me-2">
+                                    <img t-att-src="kanban_image('product.product', 'image_128', record.id.raw_value)"
+                                         class="img-thumbnail"
+                                         style="width: 60px; height: 60px;"
+                                         alt="Product"/>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center">
+                                        <field name="priority" widget="priority" class="me-1"/>
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <div id='price-unit' class="text-muted small ms-2" style="color:#000000">
+                                        Unit price:
+                                        <t t-esc="state.activePrice"/>
+                                    </div>
+
+                                    <div t-if="record.default_code and record.default_code.value">
+                                        [<field name="default_code"/>]
+                                    </div>
+                                    <div name="o_kanban_price" position="after">
+                                        <div t-if="record.detailed_type.raw_value == 'product' "
+                                             name="o_kanban_qty_available">
+                                            <span>On Hand:</span>
+                                            <field name="qty_available"/>
+                                            <field name="uom_id" class="ms-1" groups="uom.group_uom"/>
+                                        </div>
+                                        <div t-if="record.detailed_type.raw_value == 'product' and env.is_purchase">
+                                            <span>Forcast :</span>
+                                            <field name="virtual_available"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- Price display hook -->
+                                    <div name="o_kanban_price"
+                                         t-attf-id="product-{{record.id.raw_value}}-price"
+                                         class="d-flex flex-column"/>
+                                    <field name="product_template_attribute_value_ids"
+                                           widget="many2many_tags"
+                                           domain="[('id', 'in', parent.ids)]"
+                                           groups="product.group_product_variant"
+                                           options="{'color_field': 'color'}"
+                                           class="custom-m2m-tag"/>
+                                </div>
+                            </div>
+
+
+                            <!-- Spacer -->
+                            <div class="my-2 flex-grow-1 increment"></div>
+                            <t t-if="env.read_only">
+                                <span t-if="env.read_only" class="my-2 pt-3 border-top">
+                                    You can't edit this product in the catalog.
+                                </span>
+                            </t>
+                            <t t-else=" ">
+                                <!-- Bottom Section: Quantity Controls -->
+                                <div class="d-flex justify-content-between align-items-center increment">
+                                    <div t-attf-class="d-flex qty-button  product-{{env.productId}}-changes"
+                                         t-if="state.productQty">
+                                        <div class="decrement catalog-cursor">
+                                            <button class="catalog-btn-blue ">
+                                                <i class=" fa fa-minus center" style="color: #FFF"/>
+                                            </button>
+                                        </div>
+                                        <div class="quantity">
+                                            <input type="number"
+                                                   id="qty"
+                                                   t-attf-class="no-spinner form-control text-center mx-1 quantity product-{{env.productId}}"
+                                                   style="width: 100px; -moz-appearance: textfield; -webkit-appearance: none; margin: 0;"
+                                                   t-on-change="this.env.setQuantity"
+                                                   t-att-value="state.productQty || 0"/>
+                                        </div>
+                                        <div class="catalog-cursor increment">
+                                            <button class="catalog-btn-blue">
+                                                <i class="fa fa-plus" style="color:#fff;"/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <div class="catalog-remove remove-btn" t-if="state.productQty">
+                                            <button t-attf-class="btn btn-secondary" class="btn btn-light border"
+                                                    style="background-color:#E8EBEF; color:black;">
+                                                <i class="fa fa-trash remove me-1" style=" color:black;"/>
+                                                REMOVE
+                                            </button>
+                                        </div>
+                                        <div class="catalog-add add-btn " t-if="!state.productQty">
+                                            <button t-attf-class="btn btn-secondary" class="btn btn-light border">
+                                                <i class="me-1 fa fa-shopping-cart"/>
+                                                ADD
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="product_view_search_catalog" model="ir.ui.view">
+        <field name="name">product.view.search.catalog</field>
+        <field name="model">product.product</field>
+        <field name="arch" type="xml">
+            <search string="Product">
+                <!-- Search field -->
+                <field name="seller_ids" string="Vendor"/>
+                <field name="name"
+                       string="Product"
+                       filter_domain="['|', '|', ('default_code', 'ilike', self), ('name', 'ilike', self), ('barcode', 'ilike', self)]"/>
+                <field name="categ_id" filter_domain="[('categ_id', 'child_of', raw_value)]"/>
+                <field name="product_template_attribute_value_ids"
+                       groups="product.group_product_variant"/>
+                <field name="product_tmpl_id" string="Product Template"/>
+                <!-- Filter -->
+                <filter string="Favorites" name="favorites" domain="[('priority', '=', '1')]"/>
+                <separator/>
+                <filter string="Services" name="services" domain="[('type', '=', 'service')]"/>
+                <filter string="Products"
+                        name="products"
+                        domain="[('type', 'in', ['consu', 'product'])]"/>
+
+                <!-- Group By -->
+                <group expand="1" string="Group By">
+                    <filter string="Product Type" name="type" context="{'group_by':'type'}"/>
+                    <filter string="Product Category"
+                            name="categ_id"
+                            context="{'group_by':'categ_id'}"/>
+                </group>
+                <!-- searchpanel -->
+                <searchpanel>
+                    <field name="categ_id"
+                           string="Product Category"
+                           icon="fa-th-list"/>
+                    <field name="product_template_attribute_value_ids"
+                           string="Attributes"
+                           icon="fa-th-list"
+                           domain="[('ptav_active', '=', True), ('product_tmpl_id.active', '=', True)]"
+                           enable_counters="1"
+                           select="multi"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+</odoo>
