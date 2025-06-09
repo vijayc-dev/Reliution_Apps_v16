@@ -2,20 +2,19 @@
 
 <templates>
 
-    <t t-name="BalanceSheet"  class="o_action">
+    <t t-name="BalanceSheet" class="o_action">
         <div class="">
             <div style="margin-bottom: 3px;text-align: center;">
                 <h1 style="margin: 1x;">Balance Sheet</h1>
             </div>
-            <div style="margin-bottom: 3px;text-align: center;">
-                <button type="button" class="btn py-btn-primary" id="xlsx" t-on-click="print_xlsx"
+            <div style="margin-bottom: 3px;text-align: center;" class="d-flex justify-content-center">
+                <button type="button" class="btn py-btn-primary xlsx_balance_sheet" id="xlsx" t-on-click="print_xlsx"
                         style="position: relative;">Export (XLSX)
                 </button>
                 <t t-call="date_from_balance_sheet"/>
                 <t t-call="date_to_balance_sheet"/>
-                <t t-call="branch_ids_balance"/>
-                <span class="fetch_report_btn" type="button"
-                      t-on-click="loadData"
+                <span class="balance_sheet_custom_companies_options"/>
+                <span class="fetch_report_btn apply_balance_sheet" type="button"
                       style="background-color:green;color:white ;width:50px;text-align:center;margin-left:17px;">Apply
                 </span>
                 <span class="filter_view_pr"/>
@@ -45,39 +44,22 @@
             });
         </script>
         <span>End Date</span>
-                <input type="date" name="date_to" class="date_to"/>
+        <input type="date" name="date_to" class="date_to"/>
     </span>
+
+
     <span t-name="branch_ids_balance">
-        <span class="py-search-branch" style="margin-left: 10px;">
-            <!-- Trigger button for dropdown -->
-            <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                <span class="fa fa-book"></span>
-                Companies
-            </button>
+             <span class="py-search-branch d-flex">
+                 <span style="margin-left: 10px;">Company</span>
+            <select id="many2many-select-balance-sheet" class="form-control text-dark bg-white ms-1" t-ref="selectBox" t-on-change="onCompanyChange">
+                <t t-foreach="branch_list" t-as="branch" t-key="branch.id">
+                    <option t-att-value="branch.id" t-att-selected="branch.id === selected_id" id="many2many-selection-company">
+                        <t t-esc="branch.name"/>
+                    </option>
+                </t>
+            </select>
 
-            <!-- Dropdown menu containing the multi-select -->
-            <span class="dropdown-menu p-3">
-                <select id="many2many-select" class="form-control" multiple="multiple"
-                        t-att-data-placeholder="'Select branches...'"
-                        style="width: 100%;" t-ref="selectBox">
-                    <t t-foreach="branch_list" t-as="branch" t-key="branch.id">
-                        <option t-att-value="branch.id">
-                            <t t-esc="branch.name"/>
-                        </option>
-                    </t>
-                </select>
-            </span>
         </span>
-
-        <!-- Display selected branches -->
-         <span t-if="selected_branches.length > 0" style="margin-top: 10px;">
-        <t t-foreach="selected_branches" t-as="branch" t-key="branch.id">
-            <span class="badge bg-primary me-2">
-                <t t-esc="branch.name"/>
-                <i class="fa fa-times-circle ms-2" t-on-click="removeBranch.bind(this, branch.id)"></i>
-            </span>
-        </t>
-    </span>
     </span>
 
     <t t-name="BalanceSheetLine">
@@ -160,7 +142,7 @@
                             <span t-esc="net_lines.total_equity.toFixed(2)"/>
                         </div>
                     </div>
-                    <div class ="scrollable-section">
+                    <div class="scrollable-section">
                         <t t-set="equity_lines" t-value="equity_lines"/>
                         <t t-foreach="equity_lines" t-as="group" t-key="group">
                             <h4 style="font-style:italic">
@@ -178,17 +160,18 @@
                                                 </th>
                                                 <th>
                                                     <t t-set="equity_total" t-value="0"/>
-                                                       <t t-debug=""/>
-                                                       <t t-foreach="equity_lines[group][record]" t-as="lines" t-key="lines">
-                                                           <t t-if="lines and lines.amount">
-                                                                    <t t-set="equity_total"
-                                                                       t-value="equity_total + lines.amount"/>
-                                                                </t>
-                                                       </t>
-                                                       Total :
-                                                       <strong>
-                                                           <t t-esc="-equity_total.toFixed(2)"/>
-                                                       </strong>
+                                                    <t t-debug=""/>
+                                                    <t t-foreach="equity_lines[group][record]" t-as="lines"
+                                                       t-key="lines">
+                                                        <t t-if="lines and lines.amount">
+                                                            <t t-set="equity_total"
+                                                               t-value="equity_total + lines.amount"/>
+                                                        </t>
+                                                    </t>
+                                                    Total :
+                                                    <strong>
+                                                        <t t-esc="-equity_total.toFixed(2)"/>
+                                                    </strong>
                                                 </th>
                                             </tr>
                                             <tr>
@@ -198,22 +181,22 @@
                                         </thead>
                                         <tbody>
                                             <t t-set="equity_total" t-value="0"/>
-                                             <t t-foreach="equity_lines[group][record]" t-as="lines" t-key="lines">
-                                            <tr>
-                                                <td>
-                                                    <a href="#"
-                                                       t-att-id="lines.account_id"
-                                                       class="link-button click_account_line">
-                                                        <t t-esc="lines.account_name"/>
-                                                    </a>
-                                                </td>
-                                                <td>
-                                                    <t t-esc="lines.amount"
-                                                       t-options='{"widget": "float", "precision": 2}'/>
-                                                    <t t-set="equity_total" t-value="equity_total+lines.amount"/>
-                                                </td>
-                                            </tr>
-                                        </t>
+                                            <t t-foreach="equity_lines[group][record]" t-as="lines" t-key="lines">
+                                                <tr>
+                                                    <td>
+                                                        <a href="#"
+                                                           t-att-id="lines.account_id"
+                                                           class="link-button click_account_line">
+                                                            <t t-esc="lines.account_name"/>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <t t-esc="lines.amount"
+                                                           t-options='{"widget": "float", "precision": 2}'/>
+                                                        <t t-set="equity_total" t-value="equity_total+lines.amount"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
                                         </tbody>
                                     </t>
                                 </table>
@@ -228,7 +211,7 @@
                             <span t-esc="net_lines.total_liability.toFixed(2)"/>
                         </div>
                     </div>
-                    <div class = "scrollable-section">
+                    <div class="scrollable-section">
                         <t t-set="liability_lines" t-value="liability_lines"/>
                         <t t-foreach="liability_lines" t-as="group" t-key="group">
                             <h4 style="font-style:italic">
@@ -246,17 +229,18 @@
                                                 </th>
                                                 <th>
                                                     <t t-set="expense_total" t-value="0"/>
-                                                       <t t-debug=""/>
-                                                       <t t-foreach="liability_lines[group][record]" t-as="lines" t-key="lines">
-                                                           <t t-if="lines and lines.amount">
-                                                                    <t t-set="expense_total"
-                                                                       t-value="expense_total + lines.amount"/>
-                                                                </t>
-                                                       </t>
-                                                       Total :
-                                                       <strong>
-                                                           <t t-esc="-expense_total.toFixed(2)"/>
-                                                       </strong>
+                                                    <t t-debug=""/>
+                                                    <t t-foreach="liability_lines[group][record]" t-as="lines"
+                                                       t-key="lines">
+                                                        <t t-if="lines and lines.amount">
+                                                            <t t-set="expense_total"
+                                                               t-value="expense_total + lines.amount"/>
+                                                        </t>
+                                                    </t>
+                                                    Total :
+                                                    <strong>
+                                                        <t t-esc="-expense_total.toFixed(2)"/>
+                                                    </strong>
                                                 </th>
                                             </tr>
                                             <tr>
@@ -266,22 +250,22 @@
                                         </thead>
                                         <tbody>
                                             <t t-set="expense_total" t-value="0"/>
-                                             <t t-foreach="liability_lines[group][record]" t-as="lines" t-key="lines">
-                                            <tr>
-                                                <td>
-                                                    <a href="#"
-                                                       t-att-id="lines.account_id"
-                                                       class="link-button click_account_line">
-                                                        <t t-esc="lines.account_name"/>
-                                                    </a>
-                                                </td>
-                                                <td>
-                                                    <t t-esc="lines.amount"
-                                                       t-options='{"widget": "float", "precision": 2}'/>
-                                                    <t t-set="expense_total" t-value="expense_total+lines.amount"/>
-                                                </td>
-                                            </tr>
-                                        </t>
+                                            <t t-foreach="liability_lines[group][record]" t-as="lines" t-key="lines">
+                                                <tr>
+                                                    <td>
+                                                        <a href="#"
+                                                           t-att-id="lines.account_id"
+                                                           class="link-button click_account_line">
+                                                            <t t-esc="lines.account_name"/>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <t t-esc="lines.amount"
+                                                           t-options='{"widget": "float", "precision": 2}'/>
+                                                        <t t-set="expense_total" t-value="expense_total+lines.amount"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
                                         </tbody>
                                     </t>
                                 </table>
@@ -300,7 +284,7 @@
                         </div>
                     </div>
                     <t t-set="income_total" t-value="0"/>
-                    <div class = "scrollable-section">
+                    <div class="scrollable-section">
                         <t t-foreach="assets_lines" t-as="group" t-key="group">
                             <h4 style="font-style:italic">
                                 <t t-esc="group"/>
@@ -315,20 +299,20 @@
                                                         <t t-esc="record"/>
                                                     </h4>
                                                 </th>
-                                                   <th>
-                                                       <t t-set="income_total" t-value="0"/>
-                                                       <t t-debug=""/>
-                                                       <t t-foreach="assets_lines[group][record]" t-as="lines"
-                                                          t-key="lines">
-                                                           <t t-if="lines and lines.amount">
-                                                                    <t t-set="income_total"
-                                                                       t-value="income_total + lines.amount"/>
-                                                                </t>
-                                                       </t>
-                                                       Total :
-                                                       <strong>
-                                                           <t t-esc="income_total.toFixed(2)"/>
-                                                       </strong>
+                                                <th>
+                                                    <t t-set="income_total" t-value="0"/>
+                                                    <t t-debug=""/>
+                                                    <t t-foreach="assets_lines[group][record]" t-as="lines"
+                                                       t-key="lines">
+                                                        <t t-if="lines and lines.amount">
+                                                            <t t-set="income_total"
+                                                               t-value="income_total + lines.amount"/>
+                                                        </t>
+                                                    </t>
+                                                    Total :
+                                                    <strong>
+                                                        <t t-esc="income_total.toFixed(2)"/>
+                                                    </strong>
                                                 </th>
                                             </tr>
                                             <tr>
@@ -339,22 +323,22 @@
                                         <tbody>
                                             <t t-set="income_total" t-value="0"/>
                                             <t t-debug=""/>
-                                                  <t t-foreach="assets_lines[group][record]" t-as="lines" t-key="lines">
-                                            <tr>
-                                                <td>
-                                                    <a href="#"
-                                                       t-att-id="lines.account_id"
-                                                       class="link-button click_account_line">
-                                                        <t t-esc="lines.account_name"/>
-                                                    </a>
-                                                </td>
-                                                <td>
-                                                    <t t-esc="lines.amount"
-                                                       t-options='{"widget": "float", "precision": 2}'/>
-                                                    <t t-set="income_total" t-value="income_total+lines.amount"/>
-                                                </td>
-                                            </tr>
-                                        </t>
+                                            <t t-foreach="assets_lines[group][record]" t-as="lines" t-key="lines">
+                                                <tr>
+                                                    <td>
+                                                        <a href="#"
+                                                           t-att-id="lines.account_id"
+                                                           class="link-button click_account_line">
+                                                            <t t-esc="lines.account_name"/>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <t t-esc="lines.amount"
+                                                           t-options='{"widget": "float", "precision": 2}'/>
+                                                        <t t-set="income_total" t-value="income_total+lines.amount"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
                                         </tbody>
                                     </t>
                                 </table>
@@ -363,8 +347,8 @@
                     </div>
                 </div>
             </div>
-             <div class="row">
-                 <t>
+            <div class="row">
+                <t>
                     <div class="col-6">
                         <t t-if="net_lines.balance_data == 'liability'">
 
@@ -384,8 +368,8 @@
                     </div>
                     <div class="col-6">
                     </div>
-                 </t>
-                </div>
+                </t>
+            </div>
         </div>
     </t>
 </templates>

@@ -64,11 +64,14 @@ class AccountAccount(models.Model):
             'model': self,
         }
 
+        if output.get('date_from'):
+            data.update({
+                'date_from': output.get('date_from'),
+            })
         if output.get('date_to'):
             data.update({
                 'date_to': output.get('date_to'),
             })
-
         if output.get('branch_list'):
             branch_list_new = list(map(int, output.get('branch_list')))
             data.update({

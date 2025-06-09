@@ -7,7 +7,7 @@
             <div style="margin-bottom: 3px;text-align: center;">
                 <h1 style="margin: 1x;">Profit Loss</h1>
             </div>
-            <div style="margin-bottom: 32px;text-align: center;">
+            <div style="margin-bottom: 32px;text-align: center;" class="d-flex justify-content-center">
                 <button type="button" class="xlsx_profit_loss btn py-btn-primary" id="xlsx"
                         style="position: relative;">Export (XLSX)
                 </button>
@@ -20,38 +20,18 @@
                     <span style="margin-left: 10px;">End Date</span>
                     <input type="date" name="date_to" class="date_to"/>
                 </span>
+                <!--                <t t-call="customBranchList"/>-->
 
-                <span t-name="branch_ids">
-                    <span class="py-search-branch" style="margin-left: 10px;">
-                        <!-- Trigger button for dropdown -->
-                        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                            <span class="fa fa-book"></span>
-                            Companies
-                        </button>
-
-                        <!-- Dropdown menu containing the multi-select -->
-<!--                        <span class="dropdown-menu p-3">-->
-<!--                            <select id="many2many-select" class="form-control" multiple="multiple"-->
-<!--                                    t-att-data-placeholder="'Select branches...'"-->
-<!--                                    style="width: 100%;" t-ref="selectBox">-->
-<!--                                <t t-foreach="branch_list" t-as="branch" t-key="branch.id">-->
-<!--                                    <option t-att-value="branch.id">-->
-<!--                                        <t t-esc="branch.name"/>-->
-<!--                                    </option>-->
-<!--                                </t>-->
-<!--                            </select>-->
-<!--                        </span>-->
-                    </span>
-                </span>
+                <span class="custom_companies_options"/>
                 <span t-name="with_tax_data">
                     <span class="data" style="margin-left: 10px;">
-                        <input type="checkbox" t-att-checked="with_tax_data ? 'checked' : ''"
+                        <input type="checkbox" att-checked="with_tax_data ? 'checked' : ''"
                                t-on-change="toggleWithTaxData"
                                id="with_tax_data"/>
                         <label for="with_tax_data">Only Tax Entries</label>
                     </span>
                 </span>
-                <span class="apply_profit_loss fetch_report_btn" type="button"
+                <span class="apply_profit_loss fetch_report_btn text-center" type="button"
                       style="background-color:green;color:white ;width:50px;text-align:center;margin-left: 10px;">Apply
                 </span>
                 <!--                                <t t-call="date_from"/>-->
@@ -69,11 +49,24 @@
 
 
         </div>
-
-
     </t>
-    <span t-name="FinanceTableCustom" class="o_action">
 
+    <span t-name="CustomBranchList">
+            <span class="py-search-branch d-flex">
+                 <span style="margin-left: 10px;">Company</span>
+            <select id="many2many-select" class="form-control text-dark bg-white ms-1" t-ref="selectBox" >
+                <t t-foreach="branch_list" t-as="branch" t-key="branch.id">
+                    <option t-att-value="branch.id" t-att-selected="branch.id === selected_id" id="many2many-selection-company">
+                        <t t-esc="branch.name"/>
+                    </option>
+                </t>
+            </select>
+
+        </span>
+    </span>
+    <!--    </t>-->
+
+    <span t-name="FinanceTableCustom" class="o_action">
         <style>
             .custom_row {
             display: flex;
@@ -135,7 +128,6 @@
             border-top: 1px solid #000; /* Optional border */
             }
         </style>
-        <t t-debug=""/>
         <div class="table_main_view">
             <t t-set="total_income" t-value="net_lines.total_income"/>
             <div class="row">
@@ -155,7 +147,6 @@
                                 <h4>
                                     <t t-esc="group"/>
                                 </h4>
-                                <t t-debug=""/>
                                 <h4>
                                     <t t-set="income_total" t-value="0"/>
                                     <t t-foreach="income_lines[group]" t-as="record" t-key="record.id">

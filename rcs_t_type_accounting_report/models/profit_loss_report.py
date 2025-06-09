@@ -76,7 +76,9 @@ class DynamicPurchaseReport(models.Model):
 
     def balance_get_filter(self, report_values):
         filter_dict = {
+            'date_from': self.date_from,
             'date_to': self.date_to,
+
         }
         return filter_dict
 
@@ -225,6 +227,10 @@ class DynamicPurchaseReport(models.Model):
             data.update({
                 'date_to': output.get('date_to'),
             })
+        if output.get('date_from'):
+            data.update({
+                'date_from': output.get('date_from'),
+            })
         if output.get('branch_list'):
             branch_list_new = list(map(int, output.get('branch_list')))
             data.update({
@@ -255,6 +261,10 @@ class DynamicPurchaseReport(models.Model):
         if output.get('date_to'):
             report_data.update({
                 'date_to': output.get('date_to'),
+            })
+        if output.get('date_from'):
+            report_data.update({
+                'date_from': output.get('date_from'),
             })
         if output.get('branch_list'):
             branch_list_new = list(map(int, output.get('branch_list')))
@@ -294,8 +304,10 @@ class DynamicPurchaseReport(models.Model):
             sheet.write(4, 1, branches, style4)
         else:
             sheet.write(4, 1, 'ALL', style4)
-        sheet.write(5, col, 'To Date:', style4)
-        sheet.write(5, 1, data['doc_ids'].get('date_to'), style4)
+        sheet.write(5, col, 'From Date:', style4)
+        sheet.write(5, 1, data['doc_ids'].get('date_from'), style4)
+        sheet.write(6, col, 'To Date:', style4)
+        sheet.write(6, 1, data['doc_ids'].get('date_to'), style4)
 
         headers = ['Description', 'Amount', '', '', 'Description', 'Amount', '']
 

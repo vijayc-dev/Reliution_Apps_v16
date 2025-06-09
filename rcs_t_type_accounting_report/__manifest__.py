@@ -32,7 +32,9 @@
         'web.assets_backend': [
             'rcs_t_type_accounting_report/static/src/css/select2.min.css',
             'rcs_t_type_accounting_report/static/src/xml/account_report_template.xml',
+            'rcs_t_type_accounting_report/static/src/xml/balance_sheet_template.xml',
             'rcs_t_type_accounting_report/static/src/js/dynamic_profit_loss_report.js',
+            'rcs_t_type_accounting_report/static/src/js/dynamic_balance_sheet_report.js',
         ],
         'web.assets_frontend': [
             'rcs_t_type_accounting_report/static/src/js/select2.full.min.js',

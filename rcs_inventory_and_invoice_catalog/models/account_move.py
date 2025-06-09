@@ -25,7 +25,7 @@ class AccountMove(models.Model):
             seller = product._select_seller(
                 partner_id=self.partner_id,
                 quantity=None,  # use an actual expected quantity
-                date=self.invoice_date and self.invoice_date.date(),
+                date=self.invoice_date,
                 uom_id=product.uom_id,
                 params={'order_id': self}
             )

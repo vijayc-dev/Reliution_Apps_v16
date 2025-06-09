@@ -12,7 +12,7 @@
 
     'data': [
         'views/product_catalog_view.xml',
-        'views/sale_catalog_view.xml',
+        'views/training_course_view.xml',
         'views/purchase_catalog_view.xml',
         'views/inventory_catalog_view.xml',
         'views/invoice_catalog_view.xml',

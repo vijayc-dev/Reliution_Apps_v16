@@ -13,22 +13,62 @@ odoo.define('rcs_t_type_accounting_report.ProfitLossReport', function (require) 
         events:{
             'click .xlsx_profit_loss':'print_xlsx',
             'click .apply_profit_loss':'load',
+            'change #many2many-select': 'onBranchSelect',
             'click .click_account_line':'onClickOpenAccount',
-            'change .with_tax_data':'toggleWithTaxData',
         },
 
         init: function(parent, action) {
-            debugger;
             this._super.apply(this, arguments);
             this.selected_branches = [];
+            this.branch_list = [];
+            this.report_lines = action.report_lines;
             this.wizard_id = action.context.wizard || null;
             this.actionReportId = action.id;
         },
 
+        start: async function () {
+            var self = this;
+            await this._super.apply(this, arguments);
+            this.branch_list = await this.loadBranch();
+            self.session = session;
+            const option = this.loadReportOptions();
+            this.$(".date_from").val(option.pl_sheet_date_from);
+            this.$(".date_to").val(option.pl_sheet_date_to);
+
+            const $selectBox = this.$('#many2many-select');
+            $selectBox.select2({
+                placeholder: "Select branches...",
+                tags: true,
+                width: 'resolve',
+            })
+
+            if (option.pl_sheet_companies && option.pl_sheet_companies.length > 0) {
+                this.selected_branches = option.pl_sheet_companies.map(id =>
+                    this.branch_list.find(branch => branch.id == id)
+                ).filter(Boolean);
+            }
+            if(option.pl_sheet_tax_added)
+            {
+                this.$("#with_tax_data")[0].checked = true;
+            }
+//
+            this.load(true);
+
+        },
+        loadBranch : async function(){
+            const branches = await rpc.query({
+                model: 'res.company',
+                method: 'search_read',
+                args: [[], ['name']],
+            });
+            console.log(" ");
+            return branches;
+        },
+
         print_xlsx: async function () {
-            debugger;
             const output = {
-                date_range: false};
+                date_range: false
+            };
             output.date_from = this.$(".date_from").val();
             output.date_to = this.$(".date_to").val();
             output.branch_list=(this.selected_branches || []).map(branch => branch.id);
@@ -47,22 +87,15 @@ odoo.define('rcs_t_type_accounting_report.ProfitLossReport', function (require) 
 
         },
 
-        start: async function () {
-            this.load(true);
-        },
-
         sessionOptionsID: function () {
-        debugger;
             return `rcs_t_type_accounting_report:${this.actionReportId}:${session.user_companies.current_company}`;
         },
 
         saveSessionOptions: function (options) {
-        debugger;
             sessionStorage.setItem(this.sessionOptionsID(), JSON.stringify(options));
         },
 
         sessionOptions: function () {
-        debugger;
             return JSON.parse(sessionStorage.getItem(this.sessionOptionsID())) || {};
         },
 
@@ -80,24 +113,21 @@ odoo.define('rcs_t_type_accounting_report.ProfitLossReport', function (require) 
 
                 loadOptions.pl_sheet_date_from = formatDate(fyStart);
                 loadOptions.pl_sheet_date_to = formatDate(fyEnd);
+                loadOptions.pl_sheet_companies= loadOptions.pl_sheet_companies || [];
+                loadOptions.pl_sheet_tax_added= loadOptions.pl_sheet_tax_added || false;
+
             }
 
             return loadOptions;
         },
 
-        toggleWithTaxData: function(ev){
-        debugger;
-            console.log('hii toggleWithTaxData');
-        },
-
         onClickOpenAccount: async function(ev) {
-        debugger;
             const output = {
                 date_range: false};
             output.date_from = this.$(".date_from").val();
             output.date_to = this.$(".date_to").val();
             output.branch_list=(this.selected_branches || []).map(branch => branch.id);
-            output.tax_added= this. $("#with_tax_data").is(":checked");
+            output.tax_added= this.$("#with_tax_data")[0]?.checked || false;
 
             // Save filters to localStorage before navigating
             sessionStorage.setItem('from_navigation', '1'); // Mark that user is navigating
@@ -116,50 +146,68 @@ odoo.define('rcs_t_type_accounting_report.ProfitLossReport', function (require) 
                 console.error('Error opening account view:', error);
             }
         },
+        // Select the Companies and store in selected_branches list
+        onBranchSelect: function(ev){
+            const selectedOptions = [].concat($(ev.currentTarget).val());
+            this.selected_branches = selectedOptions.map(id=>
+                this.branch_list.find(branch => branch.id == id)
+            ).filter(Boolean);
+        },
 
         load: async function(){
-        debugger;
-            console.log("Load Method load");
-//            this.load_values= true;
             let output = {
                 date_range: false
             };
             let save_options = {};
-//            const date_f = document.querySelector(".date_from").value;
-//            const date_to = document.querySelector(".date_to").value;
-            const date_from = this.$(".date_from").val();
-            const date_to = this.$(".date_to").val();
-            const tax_added = this.$("#with_tax_data").is(":checked");
+            //           Same as        const date_to = document.querySelector(".date_to").value;
+            const date_from = this.$(".date_from")[0];
+            const date_to = this.$(".date_to")[0];
 
-            if(date_from){
-                output.date_from = date_from;
-                save_options.pl_sheet_data_from = date_from;
+            if(this.$(".date_from")[0]){
+                output.date_from = this.$(".date_from")[0].value;
+                save_options.pl_sheet_date_from = this.$(".date_from")[0].value;
             }
-            if(date_to){
-                output.date_to = date_to;
-                save_options.pl_sheet_data_to = date_to;
+            if(this.$(".date_to")[0]){
+                output.date_to = this.$(".date_to")[0].value;
+                save_options.pl_sheet_date_to = this.$(".date_to")[0].value;
             }
             if (Object.keys(save_options).length === 0) {
                 console.log("log")
                 save_options = this.loadReportOptions();
             }
-
+            if (this.$("#with_tax_data")[0]) {
+                output.tax_added = this.$("#with_tax_data")[0].checked;
+                save_options.pl_sheet_tax_added = this.$("#with_tax_data")[0]?.checked;
+            }
+            if (this.selected_branches.length) {
+                save_options.pl_sheet_companies = this.selected_branches.map(b => b.id);
+            }
+            // store the data in session FromDate, ToDate, TaxData and Company
             this.saveSessionOptions(save_options);
-            if (Object.keys(output).length === 0) {
-                output = {'date_from': save_options.pl_sheet_date_from, 'date_to': save_options.pl_sheet_date_to}
+            if (Object.keys(output).length === 0 ) {
+                output = {'date_from': save_options.pl_sheet_date_from, 'date_to': save_options.pl_sheet_date_to,'tax_added':save_options.pl_sheet_tax_added}
+            }
+            output.branch_list = (this.selected_branches || []).map(branch => branch.id)
+
+            //Pass out the Branch List in xml
+            this.$('.custom_companies_options').html(QWeb.render(
+                'CustomBranchList', {
+                    branch_list: this.branch_list,
+                }
+            ));
+
+            // Set the default company as a SelectBox
+            if(save_options.pl_sheet_companies){
+                this.$('#many2many-select').val(save_options.pl_sheet_companies);
             }
 
-            output.branch_list = (this.selected_branches || []).map(branch => branch.id)
-            if ($("#with_tax_data")[0]) {
-                output.tax_added = $("#with_tax_data")[0].checked;
-            }
+            //  Call python method to prepare the reports data
             try{
                  const datas = await rpc.query({
                     model : 'dynamic.accounting.report',
                     method : 'purchase_report',
                     args : [[this.wizard_id],output],
                  });
-                 debugger;
                  if(datas.orders){
                     console.log("datas.orders have a data");
                     this.$('.table_view_pr').html(QWeb.render(
@@ -176,8 +224,9 @@ odoo.define('rcs_t_type_accounting_report.ProfitLossReport', function (require) 
             } catch (error) {
                 console.error('Error loading data:', error);
             }
+
         },
     });
-    core.action_registry.add('customreport', ProfitLossReport);
+    core.action_registry.add('profitLossReport', ProfitLossReport);
     return ProfitLossReport;
 });

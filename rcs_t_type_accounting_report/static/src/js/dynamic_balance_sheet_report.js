@@ -1,250 +1,232 @@
-/** @odoo-module **/
+odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require) {
+    "use strict";
 
-import {
-   standardActionServiceProps
-} from "@web/webclient/actions/action_service";
-import {
-   registry
-} from '@web/core/registry';
-import { rpc
-} from "@web/core/network/rpc"
-import {
-   useService
-} from "@web/core/utils/hooks";
+    var AbstractAction = require('web.AbstractAction');
+    var core = require('web.core');
+    var rpc = require('web.rpc');
+    var session = require('web.session');
+    var QWeb = core.qweb;
+    var _t = core._t;
 
-import {
-   renderToFragment
-} from "@web/core/utils/render";
-import {
-   onWillStart
-} from "@odoo/owl";
-import {
-   Component,
-   useState,
-   onMounted
-} from "@odoo/owl";
-import { browser } from "@web/core/browser/browser";
-import { session } from "@web/session";
+    var BalanceSheetReport = AbstractAction.extend({
+        contentTemplate: 'BalanceSheet',
+        events: {
+            'click .xlsx_balance_sheet': 'print_xlsx',
+            'click .apply_balance_sheet': 'load',
+            'change #many2many-select-balance-sheet': 'onBranchSelectBalance',
+            'click .click_account_line': 'onClickOpenAccount',
+        },
 
+        init: function (parent, action) {
+            this._super.apply(this, arguments);
+            this.orm = rpc;
+            this.selected_branches = [];
+            this.branch_list = [];
+            this.report_lines = action.report_lines;
+            this.actionReportId = action.id;
+            this.wizard_id = action.context.wizard || null;
+        },
 
-export class BalanceSheetReport extends Component {
-   static template = "BalanceSheet";
-   setup() {
-   debugger;
-      this.rpc = rpc;
-      this.orm = useService("orm");
-      this.action = useService("action");
-      this.report_lines = this.props.action.report_lines;
-      this.actionReportId = this.props.action.id;
-      this.branch_list = [];
-      this.selected_branches = [];
-      this.load_values = true;
-      this.wizard_id = this.props.action.context.wizard || null;
-      this.loadCompanyBranches();
-      this.initial_render = true;
+        start: async function () {
+            var self = this;
+            await this._super.apply(this, arguments);
+            this.branch_list = await this.loadCompanyBranches();
+            const options = this.loadReportOptions();
+            this.$(".date_from").val(options.bl_sheet_date_from);
+            this.$(".date_to").val(options.bl_sheet_date_to);
+            const $selectBox = this.$('#many2many-select-balance-sheet');
+            $selectBox.select2({
+                placeholder: "Select branches...",
+                tags: true,
+                width: 'resolve'
+            });
+           //  Get the company for show company related balance sheet
+           if (options.bl_sheet_companies && options.bl_sheet_companies.length > 0) {
+                this.selected_branches = options.bl_sheet_companies.map(id =>
+                    this.branch_list.find(branch => branch.id == id)
+                ).filter(Boolean);
+            }
+            this.load(true);
+        },
 
-      onWillStart(async () => {
-            this.branch_list = await this.orm.call('res.company', 'search_read', [[], ['name']]);
-      });
+        sessionOptionsID: function () {
+            return `rcs_t_type_accounting_report:${this.actionReportId}:${session.user_companies.current_company}`;
+        },
 
-      onMounted(() => {
-        // const now = new Date();
-        // const year = now.getFullYear();
-        // const isAfterMarch = now.getMonth() >= 3;
-        //
-        // const fyStart = new Date(isAfterMarch ? year : year - 1, 3, 1);
-        // const fyEnd = new Date(isAfterMarch ? year + 1 : year, 2, 31);
-        //
-        // const formatDate = (date) =>
-        //     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        saveSessionOptions: function (options) {
+            sessionStorage.setItem(this.sessionOptionsID(), JSON.stringify(options));
+        },
 
-        // $(".date_from")[0].value ||= formatDate(fyStart);
-        // $(".date_to")[0].value ||= formatDate(fyEnd);
+        sessionOptions: function () {
+            return JSON.parse(sessionStorage.getItem(this.sessionOptionsID())) || {};
+        },
 
-          const mainReportOptions = this.loadReportOptions();
-          $(".date_from")[0].value ||= mainReportOptions['bl_sheet_date_from'];
-          $(".date_to")[0].value ||= mainReportOptions['bl_sheet_date_to'];
-
-         const selectBox = $('#many2many-select');
-         if (selectBox) {
-            $(selectBox).select2({
-               placeholder: "Select branches...",
-               tags: true,
-               width: 'resolve'
-            }).on("change", this.onBranchSelectBalance.bind(this));
-         }
-         const check_lines = $('#click_account_line');
-         if (check_lines) {
-            this.onClickOpenAccount.bind(this);
-         }
-      });
-      this.loadData(true);
-   }
-
-   sessionOptionsID() {
-        return `rcs_t_type_accounting_report:${ this.actionReportId }:${ session.user_companies.current_company }`;
-   }
-
-   saveSessionOptions(options) {
-        browser.sessionStorage.setItem(this.sessionOptionsID(), JSON.stringify(options));
-    }
-
-    sessionOptions() {
-        return JSON.parse(browser.sessionStorage.getItem(this.sessionOptionsID())) || {};
-    }
-
-    loadReportOptions() {
-        const loadOptions = this.sessionOptions();
-
+        loadReportOptions: function () {
+            var loadOptions = this.sessionOptions();
             if (Object.keys(loadOptions).length === 0) {
                 const now = new Date();
                 const year = now.getFullYear();
                 const isAfterMarch = now.getMonth() >= 3;
-
                 const fyStart = new Date(isAfterMarch ? year : year - 1, 3, 1);
                 const fyEnd = new Date(isAfterMarch ? year + 1 : year, 2, 31);
+
                 const formatDate = (date) =>
-                `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
                 loadOptions.bl_sheet_date_from = formatDate(fyStart);
                 loadOptions.bl_sheet_date_to = formatDate(fyEnd);
+                loadOptions.bl_sheet_companies= loadOptions.bl_sheet_companies || [];
             }
-
             return loadOptions;
-    }
+        },
 
-   async print_xlsx() {
-      let output = {
-         date_range: false
-      };
-      if ($(".date_to")[0].value) {
-         output.date_to = $(".date_to")[0].value;
-      }
-      output.branch_list = (this.selected_branches || []).map(branch => branch.id)
-
-      try {
-         var action = await this.orm.call(
-            'dynamic.accounting.report',
-            'balance_action_xlsx',
-            [
-               [this.wizard_id], output
-            ]
-         );
-         this.env.services.action.doAction(action)
-      } catch (error) {
-         console.error('Error printing XLSX:', error);
-      }
-   }
-   async onClickOpenAccount(ev) {
-      console.log("button clicked");
-      let output = {
-         date_range: false
-      };
-      if ($(".date_to")[0].value) {
-         output.date_to = $(".date_to")[0].value;
-      }
-      output.branch_list = (this.selected_branches || []).map(branch => branch.id);
-      const account_id = parseInt(ev.currentTarget.id);
-
-      try {
-         var datas = await this.orm.call(
-            'account.account',
-            'get_account_view_balance_sheet',
-            [
-               [account_id], output
-            ]
-         );
-         this.env.services.action.doAction(datas);
-      } catch (error) {
-         console.error('Error opening account view:', error);
-      }
-   }
-   async loadCompanyBranches() {
-      try {
-         const result = await this.orm.call('res.company', 'search_read', [
-            [],
-            ['name']
-         ]);
-         this.branch_list = result || [];
-      } catch (error) {
-         console.error('Error fetching branch list:', error);
-      }
-   }
-
-
-   async loadData(initial_render = true) {
-      let output = {
-          date_range: false
-      };
-      let save_options = {};
-
-        if ($(".date_from")[0]) {
-            output.date_from = $(".date_from")[0].value;
-            save_options.bl_sheet_date_from = $(".date_from")[0].value;
-        }
-       if ($(".date_to")[0]) {
-         output.date_to = $(".date_to")[0].value;
-         save_options.bl_sheet_date_to = $(".date_to")[0].value;
-       }
-       if (Object.keys(save_options).length === 0) {
-           save_options = this.loadReportOptions();
-       }
-       this.saveSessionOptions(save_options);
-       if (Object.keys(output).length === 0) {
-           output = {'date_from': save_options.bl_sheet_date_from, 'date_to': save_options.bl_sheet_date_to}
-       }
-
-      output.branch_list = (this.selected_branches || []).map(branch => branch.id)
-      var datas = await this.orm.call(
-         'dynamic.accounting.report',
-         'balance_sheet_report',
-         [
-            [this.wizard_id], output
-         ]
-      );
-      if (datas['orders']) {
-         self.$('.table_view_pr').html(renderToFragment(
-            "BalanceSheetLine", {
-               filter: datas['filters'],
-               order: datas['orders'],
-               liability_lines: datas['report_lines'].liability_lines,
-               assets_lines: datas['report_lines'].assets_lines,
-               equity_lines:datas['report_lines'].equity_lines,
-               net_lines: datas['report_lines'].total_balance,
-               profit_loss: datas['report_lines'].profit_loss
+        loadCompanyBranches: async function () {
+            try {
+                return await rpc.query({
+                    model: 'res.company',
+                    method: 'search_read',
+                    args: [[], ['name']]
+                });
+            } catch (error) {
+                console.error('Error fetching branches:', error);
+                return [];
             }
-         ));
-         document.querySelectorAll('.click_account_line').forEach(element => {
-            element.addEventListener('click', this.onClickOpenAccount.bind(this));
-         });
+        },
 
-         console.log(document.querySelectorAll('.click_account_line'));
-      }
+        load: async function (initial_render = true) {
+            let output = {
+                date_range: false
+            };
+            let save_options = {};
 
-   }
-   onBranchSelectBalance(ev) {
+            if (this.$(".date_from").val()) {
+                output.date_from = this.$(".date_from").val();
+                save_options.bl_sheet_date_from = output.date_from;
+            }
+            if (this.$(".date_to").val()) {
+                output.date_to = this.$(".date_to").val();
+                save_options.bl_sheet_date_to = output.date_to;
+            }
 
-      // Get selected options from Select2
-      const selectedOptions = $(ev.target).val();
-      this.selected_branches.splice(0); // Clear previous selections
+            if (Object.keys(save_options).length === 0) {
+                save_options = this.loadReportOptions();
+            }
+            if (this.selected_branches.length) {
+                save_options.bl_sheet_companies = this.selected_branches.map(b => b.id);
+            }
+            // Save the data in session
+            this.saveSessionOptions(save_options);
 
-      selectedOptions.forEach(branchId => {
-         const branch = this.branch_list.find(branch => branch.id == branchId);
-         if (branch) {
-            this.selected_branches.push(branch);
-         }
-      });
-   }
+            if (Object.keys(output).length === 0) {
+                output = {
+                    date_from: save_options.bl_sheet_date_from,
+                    date_to: save_options.bl_sheet_date_to
+                };
+            }
 
-   removeBranch(branch_id) {
-      // Remove branch from selected list
-      this.selected_branches = this.selected_branches.filter(branch => branch.id !== branch_id);
-      // Update Select2 to remove the tag
-      $($("#many2many-select")).val(
-         this.selected_branches.map(branch => branch.id)
-      ).trigger("change");
-   }
+            //Pass out the Branch List in xml
+            this.$('.balance_sheet_custom_companies_options').html(QWeb.render(
+                'branch_ids_balance',
+                {
+                    branch_list: this.branch_list,
+                }
+            ));
 
-}
-// Register the action
-registry.category("actions").add("balance_r", BalanceSheetReport);
+            // Set the default company as a SelectBox
+            if(save_options.bl_sheet_companies){
+                this.$('#many2many-select-balance-sheet').val(save_options.bl_sheet_companies);
+            }
+            output.branch_list = (this.selected_branches || []).map(branch => branch.id);
+
+           //  Call python method to prepare the reports data
+            try {
+                const datas = await rpc.query({
+                    model: 'dynamic.accounting.report',
+                    method: 'balance_sheet_report',
+                    args: [[this.wizard_id], output],
+                });
+
+                if (datas.orders) {
+                    this.$('.table_view_pr').html(QWeb.render("BalanceSheetLine", {
+                        filter: datas.filters,
+                        order: datas.orders,
+                        liability_lines: datas.report_lines.liability_lines,
+                        assets_lines: datas.report_lines.assets_lines,
+                        equity_lines: datas.report_lines.equity_lines,
+                        net_lines: datas.report_lines.total_balance,
+                        profit_loss: datas.report_lines.profit_loss
+                    }));
+
+                    this.$('.click_account_line').on('click', this.onClickOpenAccount.bind(this));
+                }
+            } catch (error) {
+                console.error("Failed to load data:", error);
+            }
+        },
+
+        print_xlsx: async function () {
+            let output = { date_range: false };
+
+            if (this.$(".date_from").val()) {
+                output.date_from = this.$(".date_from").val();
+            }
+            if (this.$(".date_to").val()) {
+                output.date_to = this.$(".date_to").val();
+            }
+            output.branch_list = (this.selected_branches || []).map(branch => branch.id);
+
+            try {
+                const action = await rpc.query({
+                    model: 'dynamic.accounting.report',
+                    method: 'balance_action_xlsx',
+                    args: [[this.wizard_id], output],
+                });
+                this.do_action(action);
+            } catch (error) {
+                console.error("Error printing XLSX:", error);
+            }
+        },
+
+        onClickOpenAccount: async function (ev) {
+            const account_id = parseInt(ev.currentTarget.id);
+            let output = { date_range: false };
+
+            if (this.$(".date_from").val()) {
+                output.date_from = this.$(".date_from").val();
+            }
+            if (this.$(".date_to").val()) {
+                output.date_to = this.$(".date_to").val();
+            }
+            output.branch_list = (this.selected_branches || []).map(branch => branch.id);
+            try {
+                const datas = await rpc.query({
+                    model: 'account.account',
+                    method: 'get_account_view_balance_sheet',
+                    args: [[account_id], output],
+                });
+                this.do_action(datas);
+            } catch (error) {
+                console.error('Error opening account view:', error);
+            }
+        },
+
+        // Select the Companies and store in selected_branches list
+        onBranchSelectBalance: function (ev) {
+            const selectedIds = [].concat($(ev.target).val());
+            this.selected_branches = selectedIds.map(id =>
+                this.branch_list.find(branch => branch.id == id)
+            ).filter(Boolean);
+        },
+
+        removeBranch: function (branch_id) {
+            this.selected_branches = this.selected_branches.filter(branch => branch.id !== branch_id);
+            this.$("#many2many-select").val(this.selected_branches.map(b => b.id)).trigger("change");
+        }
+
+    });
+
+    core.action_registry.add("BalanceSheetReport", BalanceSheetReport);
+    return BalanceSheetReport;
+});
+
+

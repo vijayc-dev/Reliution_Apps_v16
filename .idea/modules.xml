@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$USER_HOME$/all_odoo/v16/community16/.idea/community16.iml" filepath="$USER_HOME$/all_odoo/v16/community16/.idea/community16.iml" />
+      <module fileurl="file://$USER_HOME$/all_odoo/v16/conf16/.idea/conf16.iml" filepath="$USER_HOME$/all_odoo/v16/conf16/.idea/conf16.iml" />
+      <module fileurl="file://$USER_HOME$/all_odoo/v16/enterprise16/.idea/enterprise16.iml" filepath="$USER_HOME$/all_odoo/v16/enterprise16/.idea/enterprise16.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/v16.iml" filepath="$PROJECT_DIR$/.idea/v16.iml" />
+    </modules>
+  </component>
+</project>
