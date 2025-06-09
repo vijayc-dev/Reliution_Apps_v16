@@ -20,7 +20,6 @@
                     <span style="margin-left: 10px;">End Date</span>
                     <input type="date" name="date_to" class="date_to"/>
                 </span>
-                <!--                <t t-call="customBranchList"/>-->
 
                 <span class="custom_companies_options"/>
                 <span t-name="with_tax_data">
@@ -34,14 +33,6 @@
                 <span class="apply_profit_loss fetch_report_btn text-center" type="button"
                       style="background-color:green;color:white ;width:50px;text-align:center;margin-left: 10px;">Apply
                 </span>
-                <!--                                <t t-call="date_from"/>-->
-                <!--                                <t t-call="date_to"/>-->
-                <!--                <t t-call="branch_ids"/>-->
-                <!--                <t t-call="with_tax_data"/>-->
-                <!--                <span class="fetch_report_btn" type="button" t-on-click="loadData"-->
-                <!--                      style="background-color:green;color:white ;width:50px;text-align:center;margin-left: 10px;">Apply-->
-                <!--                </span>-->
-                <!--                <span class="filter_view_pr"/>-->
             </div>
             <div>
                 <div class="table_view_pr" style="width: 95%; margin: auto;"/>
@@ -64,7 +55,6 @@
 
         </span>
     </span>
-    <!--    </t>-->
 
     <span t-name="FinanceTableCustom" class="o_action">
         <style>
