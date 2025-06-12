@@ -31,7 +31,7 @@
                     </span>
                 </span>
                 <span class="apply_profit_loss fetch_report_btn text-center" type="button"
-                      style="background-color:green;color:white ;width:50px;text-align:center;margin-left: 10px;">Apply
+                      style="background-color:green;color:white ; padding-top:5px;width:50px;text-align:center;margin-left: 10px;">Apply
                 </span>
             </div>
             <div>

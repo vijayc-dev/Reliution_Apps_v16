@@ -15,7 +15,7 @@
                 <t t-call="date_to_balance_sheet"/>
                 <span class="balance_sheet_custom_companies_options"/>
                 <span class="fetch_report_btn apply_balance_sheet" type="button"
-                      style="background-color:green;color:white ;width:50px;text-align:center;margin-left:17px;">Apply
+                      style="background-color:green;color:white ; padding-top:5px;width:50px;text-align:center;margin-left:17px;">Apply
                 </span>
                 <span class="filter_view_pr"/>
             </div>
