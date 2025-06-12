@@ -12,12 +12,12 @@
                         style="position: relative;">Export (XLSX)
                 </button>
                 <span t-name="date_from" class=" date_start_div">
-                    <span>Start Date</span>
+                    <span style="margin-left: 10px;margin-right: 5px;">Start Date</span>
                     <input type="date" name="date_from"
                            class="date_from"/>
                 </span>
                 <span t-name="date_to" class=" date_end_div">
-                    <span style="margin-left: 10px;">End Date</span>
+                    <span style="margin-left: 10px;margin-right: 5px;">End Date</span>
                     <input type="date" name="date_to" class="date_to"/>
                 </span>
 
@@ -27,7 +27,7 @@
                         <input type="checkbox" att-checked="with_tax_data ? 'checked' : ''"
                                t-on-change="toggleWithTaxData"
                                id="with_tax_data"/>
-                        <label for="with_tax_data">Only Tax Entries</label>
+                        <label for="with_tax_data" style="margin-left: 5px;margin-right: 5px;">Only Tax Entries</label>
                     </span>
                 </span>
                 <span class="apply_profit_loss fetch_report_btn text-center" type="button"
@@ -43,16 +43,16 @@
     </t>
 
     <span t-name="CustomBranchList">
-            <span class="py-search-branch d-flex">
-                 <span style="margin-left: 10px;">Company</span>
-            <select id="many2many-select" class="form-control text-dark bg-white ms-1" t-ref="selectBox" >
+        <span class="py-search-branch d-flex">
+            <span style="margin-left: 10px;margin-right: 5px;">Company</span>
+            <select id="many2many-select" class="form-control text-dark bg-white ms-1" t-ref="selectBox">
                 <t t-foreach="branch_list" t-as="branch" t-key="branch.id">
-                    <option t-att-value="branch.id" t-att-selected="branch.id === selected_id" id="many2many-selection-company">
+                    <option t-att-value="branch.id" t-att-selected="branch.id === selected_id"
+                            id="many2many-selection-company">
                         <t t-esc="branch.name"/>
                     </option>
                 </t>
             </select>
-
         </span>
     </span>
 

@@ -25,7 +25,7 @@
         </div>
     </t>
     <span t-name="date_from_balance_sheet" class=" date_start_div">
-        <span>Start Date</span>
+        <span style="margin-left: 10px;margin-right: 5px;">Start Date</span>
         <input type="date" name="date_from"
                class="date_from"/>
     </span>
@@ -43,17 +43,19 @@
             });
             });
         </script>
-        <span>End Date</span>
+        <span style="margin-left: 10px;margin-right: 5px;">End Date</span>
         <input type="date" name="date_to" class="date_to"/>
     </span>
 
 
     <span t-name="branch_ids_balance">
-             <span class="py-search-branch d-flex">
-                 <span style="margin-left: 10px;">Company</span>
-            <select id="many2many-select-balance-sheet" class="form-control text-dark bg-white ms-1" t-ref="selectBox" t-on-change="onCompanyChange">
+        <span class="py-search-branch d-flex">
+            <span style="margin-left: 10px;margin-right: 5px;">Company</span>
+            <select id="many2many-select-balance-sheet" class="form-control text-dark bg-white ms-1" t-ref="selectBox"
+                    t-on-change="onCompanyChange">
                 <t t-foreach="branch_list" t-as="branch" t-key="branch.id">
-                    <option t-att-value="branch.id" t-att-selected="branch.id === selected_id" id="many2many-selection-company">
+                    <option t-att-value="branch.id" t-att-selected="branch.id === selected_id"
+                            id="many2many-selection-company">
                         <t t-esc="branch.name"/>
                     </option>
                 </t>

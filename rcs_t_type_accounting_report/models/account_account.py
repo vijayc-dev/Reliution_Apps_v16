@@ -31,20 +31,25 @@ class AccountAccount(models.Model):
             data.update({
                 'date_from': output.get('date_from'),
             })
-
+        if output.get('tax_added'):
+            data.update({
+                'tax_added': output.get('tax_added'),
+            })
         if output.get('branch_list'):
             branch_list_new = list(map(int, output.get('branch_list')))
             data.update({
                 'branch_list': branch_list_new,
             })
         # return action
-        action = self.env["ir.actions.actions"]._for_xml_id("account.action_account_moves_all")
+        action = self.env["ir.actions.actions"].sudo()._for_xml_id("account.action_account_moves_all")
         action["name"] = 'Journal Items'
         domain = [('account_id', 'in', self.ids), ]
         if output.get('date_from'):
             domain.append(('date', '>=', output['date_from']))
         if output.get('date_to'):
             domain.append(('date', '<=', output['date_to']))
+        if output.get('tax_added'):
+            domain.append(('tax_ids', '!=',False))
 
         action['domain'] = domain
         action["context"] = {
@@ -56,7 +61,7 @@ class AccountAccount(models.Model):
 
     def get_account_view_balance_sheet(self, output):
         branch_list_new = []
-        report_values = self.env['dynamic.accounting.report'].search(
+        report_values = self.env['dynamic.accounting.report'].sudo().search(
             [('id', '=', self.id)]
         )
         data = {

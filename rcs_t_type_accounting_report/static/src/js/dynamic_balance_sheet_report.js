@@ -1,4 +1,4 @@
-odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require) {
+odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function(require) {
     "use strict";
 
     var AbstractAction = require('web.AbstractAction');
@@ -17,7 +17,7 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
             'click .click_account_line': 'onClickOpenAccount',
         },
 
-        init: function (parent, action) {
+        init: function(parent, action) {
             this._super.apply(this, arguments);
             this.orm = rpc;
             this.selected_branches = [];
@@ -27,21 +27,15 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
             this.wizard_id = action.context.wizard || null;
         },
 
-        start: async function () {
+        start: async function() {
             var self = this;
             await this._super.apply(this, arguments);
             this.branch_list = await this.loadCompanyBranches();
             const options = this.loadReportOptions();
             this.$(".date_from").val(options.bl_sheet_date_from);
             this.$(".date_to").val(options.bl_sheet_date_to);
-            const $selectBox = this.$('#many2many-select-balance-sheet');
-            $selectBox.select2({
-                placeholder: "Select branches...",
-                tags: true,
-                width: 'resolve'
-            });
-           //  Get the company for show company related balance sheet
-           if (options.bl_sheet_companies && options.bl_sheet_companies.length > 0) {
+            //  Get the company for show company related balance sheet
+            if (options.bl_sheet_companies && options.bl_sheet_companies.length > 0) {
                 this.selected_branches = options.bl_sheet_companies.map(id =>
                     this.branch_list.find(branch => branch.id == id)
                 ).filter(Boolean);
@@ -49,19 +43,19 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
             this.load(true);
         },
 
-        sessionOptionsID: function () {
+        sessionOptionsID: function() {
             return `rcs_t_type_accounting_report:${this.actionReportId}:${session.user_companies.current_company}`;
         },
 
-        saveSessionOptions: function (options) {
+        saveSessionOptions: function(options) {
             sessionStorage.setItem(this.sessionOptionsID(), JSON.stringify(options));
         },
 
-        sessionOptions: function () {
+        sessionOptions: function() {
             return JSON.parse(sessionStorage.getItem(this.sessionOptionsID())) || {};
         },
 
-        loadReportOptions: function () {
+        loadReportOptions: function() {
             var loadOptions = this.sessionOptions();
             if (Object.keys(loadOptions).length === 0) {
                 const now = new Date();
@@ -75,17 +69,22 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
 
                 loadOptions.bl_sheet_date_from = formatDate(fyStart);
                 loadOptions.bl_sheet_date_to = formatDate(fyEnd);
-                loadOptions.bl_sheet_companies= loadOptions.bl_sheet_companies || [];
+                loadOptions.bl_sheet_companies = loadOptions.bl_sheet_companies || [];
             }
             return loadOptions;
         },
 
-        loadCompanyBranches: async function () {
+        loadCompanyBranches: async function() {
             try {
                 return await rpc.query({
                     model: 'res.company',
                     method: 'search_read',
-                    args: [[], ['name']]
+                    args: [
+                        [
+                            ['id', 'in', session.user_context.allowed_company_ids]
+                        ],
+                        ['name']
+                    ],
                 });
             } catch (error) {
                 console.error('Error fetching branches:', error);
@@ -93,7 +92,7 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
             }
         },
 
-        load: async function (initial_render = true) {
+        load: async function(initial_render = true) {
             let output = {
                 date_range: false
             };
@@ -124,26 +123,30 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
                 };
             }
 
+            output.branch_list = (this.selected_branches || []).map(branch => branch.id);
+            // if the company not selected then default company is current login company
+            if (output.branch_list.length <= 0) {
+                output.branch_list = [].concat(session.user_context.allowed_company_ids[0]);
+            }
+
             //Pass out the Branch List in xml
             this.$('.balance_sheet_custom_companies_options').html(QWeb.render(
-                'branch_ids_balance',
-                {
+                'branch_ids_balance', {
                     branch_list: this.branch_list,
                 }
             ));
 
             // Set the default company as a SelectBox
-            if(save_options.bl_sheet_companies){
-                this.$('#many2many-select-balance-sheet').val(save_options.bl_sheet_companies);
-            }
-            output.branch_list = (this.selected_branches || []).map(branch => branch.id);
+            this.$('#many2many-select-balance-sheet').val(output.branch_list);
 
-           //  Call python method to prepare the reports data
+            //  Call python method to prepare the reports data
             try {
                 const datas = await rpc.query({
                     model: 'dynamic.accounting.report',
                     method: 'balance_sheet_report',
-                    args: [[this.wizard_id], output],
+                    args: [
+                        [this.wizard_id], output
+                    ],
                 });
 
                 if (datas.orders) {
@@ -156,7 +159,6 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
                         net_lines: datas.report_lines.total_balance,
                         profit_loss: datas.report_lines.profit_loss
                     }));
-
                     this.$('.click_account_line').on('click', this.onClickOpenAccount.bind(this));
                 }
             } catch (error) {
@@ -164,8 +166,10 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
             }
         },
 
-        print_xlsx: async function () {
-            let output = { date_range: false };
+        print_xlsx: async function() {
+            let output = {
+                date_range: false
+            };
 
             if (this.$(".date_from").val()) {
                 output.date_from = this.$(".date_from").val();
@@ -174,12 +178,17 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
                 output.date_to = this.$(".date_to").val();
             }
             output.branch_list = (this.selected_branches || []).map(branch => branch.id);
-
+            // if the company not selected then default company is current login company
+            if (output.branch_list.length <= 0) {
+                output.branch_list = [].concat(session.user_context.allowed_company_ids[0]);
+            }
             try {
                 const action = await rpc.query({
                     model: 'dynamic.accounting.report',
                     method: 'balance_action_xlsx',
-                    args: [[this.wizard_id], output],
+                    args: [
+                        [this.wizard_id], output
+                    ],
                 });
                 this.do_action(action);
             } catch (error) {
@@ -187,9 +196,11 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
             }
         },
 
-        onClickOpenAccount: async function (ev) {
+        onClickOpenAccount: async function(ev) {
             const account_id = parseInt(ev.currentTarget.id);
-            let output = { date_range: false };
+            let output = {
+                date_range: false
+            };
 
             if (this.$(".date_from").val()) {
                 output.date_from = this.$(".date_from").val();
@@ -198,11 +209,17 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
                 output.date_to = this.$(".date_to").val();
             }
             output.branch_list = (this.selected_branches || []).map(branch => branch.id);
+            // if the company not selected then default company is current login company
+            if (output.branch_list.length <= 0) {
+                output.branch_list = [].concat(session.user_context.allowed_company_ids[0]);
+            }
             try {
                 const datas = await rpc.query({
                     model: 'account.account',
                     method: 'get_account_view_balance_sheet',
-                    args: [[account_id], output],
+                    args: [
+                        [account_id], output
+                    ],
                 });
                 this.do_action(datas);
             } catch (error) {
@@ -211,14 +228,14 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
         },
 
         // Select the Companies and store in selected_branches list
-        onBranchSelectBalance: function (ev) {
+        onBranchSelectBalance: function(ev) {
             const selectedIds = [].concat($(ev.target).val());
             this.selected_branches = selectedIds.map(id =>
                 this.branch_list.find(branch => branch.id == id)
             ).filter(Boolean);
         },
 
-        removeBranch: function (branch_id) {
+        removeBranch: function(branch_id) {
             this.selected_branches = this.selected_branches.filter(branch => branch.id !== branch_id);
             this.$("#many2many-select").val(this.selected_branches.map(b => b.id)).trigger("change");
         }
@@ -228,5 +245,3 @@ odoo.define('rcs_t_type_accounting_report.BalanceSheetReport', function (require
     core.action_registry.add("BalanceSheetReport", BalanceSheetReport);
     return BalanceSheetReport;
 });
-
-

@@ -172,29 +172,29 @@ class DynamicPurchaseReport(models.Model):
                 from_date = datetime.strptime(data.get('date_from'), '%Y-%m-%d').date()
                 to_date = datetime.strptime(data.get('date_to'), '%Y-%m-%d').date()
                 if data.get('tax_added'):
-                    lines = self.env['account.move.line'].search(
+                    lines = self.env['account.move.line'].sudo().search(
                         [('account_id.type', '=', account_type_id.id), ('date', '<=', to_date),
                          ('date', '>=', from_date), ('tax_ids', '!=', False)])
                 else:
-                    lines = self.env['account.move.line'].search(
+                    lines = self.env['account.move.line'].sudo().search(
                         [('account_id.type', '=', account_type_id.id), ('date', '<=', to_date),
                          ('date', '>=', from_date)])
             elif data.get('date_to'):
                 to_date = datetime.strptime(data.get('date_to'), '%Y-%m-%d').date()
                 if data.get('tax_added'):
-                    lines = self.env['account.move.line'].search(
+                    lines = self.env['account.move.line'].sudo().search(
                         [('account_id.type', '=', account_type_id.id), ('date', '<=', to_date),
                          ('tax_ids', '!=', False)])
                 else:
-                    lines = self.env['account.move.line'].search(
+                    lines = self.env['account.move.line'].sudo().search(
                         [('account_id.type', '=', account_type_id.id), ('date', '<=', to_date),
                          ])
             else:
                 if data.get('tax_added'):
-                    lines = self.env['account.move.line'].search(
+                    lines = self.env['account.move.line'].sudo().search(
                         [('account_id.type', '=', account_type_id.id), ('tax_ids', '!=', False)])
                 else:
-                    lines = self.env['account.move.line'].search(
+                    lines = self.env['account.move.line'].sudo().search(
                         [('account_id.type', '=', account_type_id.id)])
             if data.get('branch_list'):
                 lines = lines.sudo().filtered(
