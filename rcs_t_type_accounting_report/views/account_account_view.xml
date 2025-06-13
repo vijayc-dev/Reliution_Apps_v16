@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_account_type_list" model="ir.ui.view">
+        <field name="name">account.account.type.list</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='account_type']" position="after">
+                <field name="type"/>
+            </xpath>
+        </field>
+    </record>
+
+        <record id="view_account_account_type_form" model="ir.ui.view">
+        <field name="name">account.account.type.form</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_form"/>
+        <field name="arch" type="xml">
+            <field name="account_type" position="after">
+                <field name="type"/>
+                <field name="chart_of_account_type"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_account_type_tree" model="ir.ui.view">
+            <field name="name">account.account.type.tree</field>
+            <field name="model">account.account.type</field>
+            <field name="arch" type="xml">
+                <list string="Account Type">
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="internal_group"/>
+                    <field name="parent_id"/>
+                    <field name="child_ids" invisible="True"/>
+                    <field name="level"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_type_form" model="ir.ui.view">
+            <field name="name">account.type.form</field>
+            <field name="model">account.account.type</field>
+            <field name="arch" type="xml">
+                <form string="Type">
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="type"/>
+                            <field name="internal_group"/>
+                            <field name="parent_id"/>
+                            <field name="child_ids" invisible="True"/>
+                            <field name="level"/>
+                        </group>
+                        <group>
+                            <field name="include_initial_balance"/>
+                        </group>
+                    </group>
+                    <separator string="Description"/>
+                    <field name="note"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="account_type_search_view" model="ir.ui.view">
+            <field name="name">account.type.search.view</field>
+            <field name="model">account.account.type</field>
+            <field name="arch" type="xml">
+                <search string="Search Account Type">
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="internal_group"/>
+                    <field name="parent_id"/>
+                    <field name="child_ids"/>
+                    <field name="level"/>
+                        <searchpanel>
+                            <field name="parent_id" select="multi" enable_counters="1"/>
+                        </searchpanel>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_account_type_form" model="ir.actions.act_window">
+            <field name="name">Account Types</field>
+            <field name="res_model">account.account.type</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="account_type_search_view"/>
+        </record>
+
+        <menuitem id="menu_action_account_type_form" action="action_account_type_form" parent="account.account_account_menu" sequence="15"/>
+</odoo>
