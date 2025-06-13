@@ -36,9 +36,6 @@
             'rcs_t_type_accounting_report/static/src/js/dynamic_profit_loss_report.js',
             'rcs_t_type_accounting_report/static/src/js/dynamic_balance_sheet_report.js',
         ],
-        'web.assets_frontend': [
-            'rcs_t_type_accounting_report/static/src/js/select2.full.min.js',
-        ],
     },
 
     'price': '100',
